@@ -1,6 +1,6 @@
 import mpsc
 
-def received_sent_message():
+def test_received_sent_message():
     (sender, receiver) = mpsc.channel()
 
     sent_message = "Hello, world!"
