@@ -1,7 +1,7 @@
 import mpsc
 
 def test_received_sent_message():
-    (sender, receiver) = mpsc.channel()
+    sender, receiver = mpsc.channel()
 
     sent_message = "Hello, world!"
     sender.send(sent_message)
