@@ -1,30 +1,7 @@
 import os
 from socket import socket
 
-binary_extensions = {
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".ico",
-    ".svg",
-    ".pdf"
-}
-
-def read_text(path:str):
-    try:
-        with open(path, "r") as file:
-            content = file.read()
-            length = len(content)
-            status_line = "HTTP/1.1 200 OK"
-    except FileNotFoundError:
-        with open("public/404.html") as file:
-            content = file.read()
-            length = len(content)
-            status_line = "HTTP/1.1 404 NOT FOUND"
-
-    return content, length, status_line
-
-def read_bin(path: str):
+def serve_file(path: str):
     try:
         with open(path, "rb") as file:
             content = file.read()
@@ -58,6 +35,8 @@ def handle_client(conn: socket):
             response = "HTTP/1.1 501 NOT IMPLEMENTED\r\n"
             conn.send(response.encode())
 
+    conn.close()
+
 def get(uri: str) -> bytes:
     filename, extension = os.path.splitext(uri)
 
@@ -69,10 +48,9 @@ def get(uri: str) -> bytes:
 
     path = f"public{filename}{extension}"
 
-    content, length, status_line = read_bin(path) if extension in binary_extensions else read_text(path)
+    content, length, status_line = serve_file(path)
 
     headers = f"{status_line}\r\nContent-Length: {length}\r\n\r\n".encode()
-    content = content if extension in binary_extensions else content.encode()
     response = headers + content
 
     return response
