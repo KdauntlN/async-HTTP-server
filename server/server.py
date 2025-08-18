@@ -55,8 +55,8 @@ def handle_client(conn: socket):
             response = get(uri)
             conn.send(response)
         case _:
-            response = "HTTP/1.1 501 NOT IMPLEMENTED"
-            conn.send(response.encode())  
+            response = "HTTP/1.1 501 NOT IMPLEMENTED\r\n"
+            conn.send(response.encode())
 
 def get(uri: str) -> bytes:
     filename, extension = os.path.splitext(uri)
