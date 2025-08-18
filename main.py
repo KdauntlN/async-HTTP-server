@@ -1,7 +1,6 @@
 from threadpool import ThreadPool
 from server import incoming, handle_client
 
-import time
 import socket
 
 def main():

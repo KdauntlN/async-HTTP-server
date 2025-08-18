@@ -1,4 +1,5 @@
 import os
+from socket import socket
 
 binary_extensions = {
     ".png",
@@ -9,7 +10,7 @@ binary_extensions = {
     ".pdf"
 }
 
-def read_text(path):
+def read_text(path:str):
     try:
         with open(path, "r") as file:
             content = file.read()
@@ -23,7 +24,7 @@ def read_text(path):
 
     return content, length, status_line
 
-def read_bin(path):
+def read_bin(path: str):
     try:
         with open(path, "rb") as file:
             content = file.read()
@@ -37,7 +38,7 @@ def read_bin(path):
     
     return content, length, status_line
 
-def handle_client(conn):
+def handle_client(conn: socket):
     request: str = conn.recv(1024).decode()
 
     try:
@@ -48,13 +49,17 @@ def handle_client(conn):
 
     words = request_line.split(" ")
 
-    if words[0] != "GET":
-        response = "HTTP/1.1 501 NOT IMPLEMENTED"
-        conn.send(response.encode())
-        return
+    match words[0]:
+        case "GET":
+            uri = words[1]
+            response = get(uri)
+            conn.send(response)
+        case _:
+            response = "HTTP/1.1 501 NOT IMPLEMENTED"
+            conn.send(response.encode())  
 
-    requested_file = words[1]
-    filename, extension = os.path.splitext(requested_file)
+def get(uri: str) -> bytes:
+    filename, extension = os.path.splitext(uri)
 
     if extension == "":
         extension = ".html"
@@ -70,17 +75,17 @@ def handle_client(conn):
     content = content if extension in binary_extensions else content.encode()
     response = headers + content
 
-    conn.send(response)
+    return response
 
 class IterConn:
-    def __init__(self, server):
+    def __init__(self, server: socket) -> None:
         self.server = server
 
-    def __iter__(self):
+    def __iter__(self) -> "IterConn":
         return self
     
-    def __next__(self):
+    def __next__(self) -> tuple[socket, str]:
         return self.server.accept()
 
-def incoming(server):
+def incoming(server: socket) -> IterConn:
     return IterConn(server)
