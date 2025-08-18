@@ -1,15 +1,6 @@
 import os
 from socket import socket
 
-binary_extensions = {
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".ico",
-    ".svg",
-    ".pdf"
-}
-
 def find_mime(ext) -> str:
     match ext:
         case ".html" | ".htm":
@@ -41,21 +32,7 @@ def find_mime(ext) -> str:
         case ".xml":
             return "application/xml"
 
-def read_text(path:str):
-    try:
-        with open(path, "r") as file:
-            content = file.read()
-            length = len(content)
-            status_line = "HTTP/1.1 200 OK"
-    except FileNotFoundError:
-        with open("public/404.html") as file:
-            content = file.read()
-            length = len(content)
-            status_line = "HTTP/1.1 404 NOT FOUND"
-
-    return content, length, status_line
-
-def read_bin(path: str):
+def fetch_file(path: str):
     try:
         with open(path, "rb") as file:
             content = file.read()
@@ -101,7 +78,7 @@ def get(uri: str) -> bytes:
 
     path = f"public{filename}{extension}"
 
-    content, length, status_line = read_bin(path)
+    content, length, status_line = fetch_file(path)
 
     mime_type = find_mime(extension)
 
@@ -111,7 +88,7 @@ def get(uri: str) -> bytes:
                f"Connection: close\r\n"
                "\r\n"
                ).encode()
-    content = content if extension in binary_extensions else content.encode()
+    
     response = headers + content
 
     return response
