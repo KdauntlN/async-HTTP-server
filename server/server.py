@@ -1,6 +1,16 @@
 import os
 from socket import socket
 
+def sanitize_path(requested_path):
+    server_root = "public\\"
+    requested_path = requested_path.lstrip("/")
+    full_path = os.path.normpath(os.path.join(server_root, requested_path))
+    if full_path.startswith(server_root):
+        return full_path
+    else:
+        return None
+
+
 def find_mime(ext) -> str:
     match ext:
         case ".html" | ".htm":
@@ -39,7 +49,7 @@ def fetch_file(path: str):
             length = len(content)
             status_line = "HTTP/1.1 200 OK"
     except FileNotFoundError:
-        with open("public/404.html") as file:
+        with open("public/404.html", "rb") as file:
             content = file.read()
             length = len(content)
             status_line = "HTTP/1.1 404 NOT FOUND"
@@ -57,7 +67,7 @@ def handle_client(conn: socket):
 
     method, uri, _protocol = request_line.split(" ")
 
-    match method[0]:
+    match method:
         case "GET":
             response = get(uri)
             conn.send(response)
@@ -76,7 +86,14 @@ def get(uri: str) -> bytes:
     if filename == "/":
         filename = "/index"
 
-    path = f"public{filename}{extension}"
+    uri = f"{filename}{extension}"
+    print(uri)
+
+    path = sanitize_path(uri)
+
+    if not path:
+        response = "HTTP/1.1 403 FORBIDDEN".encode()
+        return response
 
     content, length, status_line = fetch_file(path)
 
