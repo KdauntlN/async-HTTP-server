@@ -10,6 +10,37 @@ binary_extensions = {
     ".pdf"
 }
 
+def find_mime(ext) -> str:
+    match ext:
+        case ".html" | ".htm":
+            return "text/html"
+        case ".css":
+            return "text/css"
+        case ".js":
+            return "application/javascript"
+        case ".png":
+            return "image/png"
+        case ".jpg":
+            return "image/jpg"
+        case ".jpeg":
+            return "image/jpeg"
+        case ".gif":
+            return "image/gif"
+        case ".ico":
+            return "image/x-icon"
+        case ".svg":
+            return "image/svg+xml"
+        case ".webp":
+            return "image/webp"
+        case ".json":
+            return "application/json"
+        case ".pdf":
+            return "application/pdf"
+        case ".txt":
+            return "text/plain"
+        case ".xml":
+            return "application/xml"
+
 def read_text(path:str):
     try:
         with open(path, "r") as file:
@@ -47,16 +78,17 @@ def handle_client(conn: socket):
         print(f" Error with request: {request}\n")
         return
 
-    words = request_line.split(" ")
+    method, uri, _protocol = request_line.split(" ")
 
-    match words[0]:
+    match method[0]:
         case "GET":
-            uri = words[1]
             response = get(uri)
             conn.send(response)
         case _:
             response = "HTTP/1.1 501 NOT IMPLEMENTED\r\n"
             conn.send(response.encode())
+
+    conn.close()
 
 def get(uri: str) -> bytes:
     filename, extension = os.path.splitext(uri)
@@ -71,7 +103,14 @@ def get(uri: str) -> bytes:
 
     content, length, status_line = read_bin(path) if extension in binary_extensions else read_text(path)
 
-    headers = f"{status_line}\r\nContent-Length: {length}\r\n\r\n".encode()
+    mime_type = find_mime(extension)
+
+    headers = (f"{status_line}\r\n"
+               f"Content-Length: {length}\r\n"
+               f"Content-Type: {mime_type}\r\n"
+               f"Connection: close\r\n"
+               "\r\n"
+               ).encode()
     content = content if extension in binary_extensions else content.encode()
     response = headers + content
 
